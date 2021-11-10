@@ -3,21 +3,29 @@
 #include <map>
 #include <string>
 #include <List>
-#include <QPointer>
+#define OPEN_RESOURCE_REVIEW_SVR_METHOD "OpenResourceReview"
+#define OPEN_REVIEWROOM_RESOURCEVERSION_SVR_METHOD "OpenReviewRoomResourceVersion"
 class ComManagers
 {
 public:
-	ComManagers();
 	~ComManagers();
-	
-	bool Conflict(std::string, IComInterface*com);
-	bool Register(std::string, IComInterface* com);
+
+	static ComManagers *GetInstance()
+	{
+		static ComManagers notify_center;
+		return &notify_center;
+	}
+
+	bool Conflict(std::string, std::shared_ptr<IComInterface>com);
+	bool Register(std::string, std::shared_ptr<IComInterface> com);
 	bool UnRegister(std::string, QList<QPair<QVariant::Type, std::string> > params);
+	bool UnRegister(std::string, std::shared_ptr<IComInterface> com);
 
 	QVariant Invoke(std::string req);
 	QVariant Invoke(std::string funcname, const char* params);
 
 	void ResultHandle(QVariant in_var, QJsonObject& out_var);
 private:
-	std::map<std::string, std::list<IComInterface*>> com_func_map_;
+	explicit ComManagers();
+	std::map<std::string, std::list<std::shared_ptr<IComInterface>>> com_func_map_;
 };

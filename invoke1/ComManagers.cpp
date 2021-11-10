@@ -10,7 +10,7 @@ ComManagers::~ComManagers()
 
 }
 
-bool ComManagers::Conflict(std::string func_name, IComInterface* com)
+bool ComManagers::Conflict(std::string func_name, std::shared_ptr<IComInterface> com)
 {
 	auto it = com_func_map_.find(func_name);
 	if (it != com_func_map_.end())
@@ -25,12 +25,12 @@ bool ComManagers::Conflict(std::string func_name, IComInterface* com)
 	}
 	else
 	{
-		return true;
+		return false;
 	}
 	return false;
 }
 
-bool ComManagers::Register(std::string func_name, IComInterface* com)
+bool ComManagers::Register(std::string func_name, std::shared_ptr<IComInterface> com)
 {
 	if (Conflict(func_name, com))
 	{
@@ -43,7 +43,7 @@ bool ComManagers::Register(std::string func_name, IComInterface* com)
 	}
 	else
 	{
-		std::list<IComInterface*> lst;
+		std::list<std::shared_ptr<IComInterface>> lst;
 		lst.push_back(com);
 		com_func_map_[func_name] = lst;
 	}
@@ -55,12 +55,34 @@ QVariant ComManagers::Invoke(std::string req)
 	return QVariant();
 }
 
+bool ComManagers::UnRegister(std::string func_name, std::shared_ptr<IComInterface> cm)
+{
+	auto it = com_func_map_.find(func_name);
+	if (it == com_func_map_.end())
+	{
+		return false;
+	}
+	if (it != com_func_map_.end())
+	{
+		it->second.remove_if([cm](std::shared_ptr<IComInterface>& com) {return com== cm; });
+	}
+	if (it->second.size() <= 0)
+	{
+		com_func_map_.erase(it);
+	}
+	return true;
+}
+
 bool ComManagers::UnRegister(std::string func_name, QList<QPair<QVariant::Type, std::string> > params)
 {
 	auto it = com_func_map_.find(func_name);
 	if (it != com_func_map_.end())
 	{
-		it->second.remove_if([params](IComInterface*& com) {return com->ArgEqual(params); });
+		it->second.remove_if([params](std::shared_ptr<IComInterface>& com) {return com->ArgEqual(params); });
+	}
+	if (it->second.size() <= 0)
+	{
+		com_func_map_.erase(it);
 	}
 	return true;
 }
