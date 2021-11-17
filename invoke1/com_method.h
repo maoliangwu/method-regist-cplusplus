@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "i_comInterface.h"
 #include "CheckArgType.h"
 #include <QJsonObject>
@@ -11,7 +11,7 @@
 //#include "reader.h"
 Q_DECLARE_METATYPE(std::string)
 
-//¶Ô×Ö·û´®ÀàĞÍµÄ²ÎÊı£¬ĞèÒª¿¼ÂÇĞÎ²ÎÊÇstd::string£¬Èë²ÎÊÇ×Ö·û´®£¬ÔòQVariant×Ô¶¯×ª»»³öµÄÊÇQString£¬ĞèÒªÊÖ¶¯tostdstring,·ñÔòµ¼ÖÂÊµ²ÎÓëÊµ¼Ê´«Öµ²½Æ¥Åä
+//å¯¹å­—ç¬¦ä¸²ç±»å‹çš„å‚æ•°ï¼Œéœ€è¦è€ƒè™‘å½¢å‚æ˜¯std::stringï¼Œå…¥å‚æ˜¯å­—ç¬¦ä¸²ï¼Œåˆ™QVariantè‡ªåŠ¨è½¬æ¢å‡ºçš„æ˜¯QStringï¼Œéœ€è¦æ‰‹åŠ¨tostdstring,å¦åˆ™å¯¼è‡´å®å‚ä¸å®é™…ä¼ å€¼æ­¥åŒ¹é…
 #define TranslateVariant(obj, i, params, X,lst)\
 if (QString::fromStdString(obj[params[i].second.c_str()].toVariant().typeName()) == "QString"&& qMetaTypeId<X>() == qMetaTypeId<std::string>())\
 {\
@@ -33,7 +33,10 @@ public:
 	SimpleMethod(std::shared_ptr<FuncObj> obj, std::function<R(Args...)> func) :signal_func_(func), obj_(obj) {};
 	~SimpleMethod()
 	{
-		obj_ = nullptr;
+		if (obj_)
+		{
+			obj_ = nullptr;
+		}
 	};
 	R operator()(Args... args)
 	{
@@ -56,7 +59,10 @@ public:
 	}
 	~ComMethod()
 	{
-		mem_func_ = nullptr;
+		if (mem_func_)
+		{
+			mem_func_ = nullptr;
+		}
 	}
 	bool checkArg(const char* pchReq)
 	{
@@ -133,6 +139,31 @@ protected:
 };
 
 
+template< class R, class FuncObj>
+class ComMethod0 :
+	public ComMethod < R, FuncObj>
+{
+public:
+	ComMethod0(std::function<R(void)> func, std::shared_ptr<FuncObj> obj, const QList<QPair<QVariant::Type, std::string> >& params) :ComMethod(func, obj, params)
+	{
+
+	}
+	bool invoke(const char* pchReq, const std::function<void(QVariant, QJsonObject&)> func, QJsonObject&dealresult)
+	{
+		QJsonObject obj;
+		if (strlen(pchReq) == 0)
+		{
+			R ret = (*mem_func_)();
+			func(QVariant::fromValue<R>(ret), dealresult);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+};
+
 template< class R, class FuncObj, class A>
 class ComMethod1 :
 	public ComMethod<R, FuncObj, A>
@@ -155,7 +186,7 @@ public:
 			case 1:
 			{
 				TranslateVariant(obj, 0, params_, A, lst);
-				(*mem_func_)(lst[0].value<A>());
+				ret = (*mem_func_)(lst[0].value<A>());
 			}
 			break;
 			default:

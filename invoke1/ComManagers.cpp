@@ -52,7 +52,8 @@ bool ComManagers::Register(std::string func_name, std::shared_ptr<IComInterface>
 
 QVariant ComManagers::Invoke(std::string req)
 {
-	return QVariant();
+	QJsonObject doc = QJsonDocument::fromJson(QString::fromStdString(req).toUtf8()).object();
+	return Invoke(doc["method"].toString().toStdString(), doc["params"].toString().toStdString().c_str());
 }
 
 bool ComManagers::UnRegister(std::string func_name, std::shared_ptr<IComInterface> cm)
